@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#07070d">
+<meta name="description" content="Tu amigo virtual: un orbe que vive en tu celular.">
+<title>Orbe</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app" data-season="primavera">
+  <div id="sky" aria-hidden="true"></div>
+  <div id="fx" aria-hidden="true"></div>
+
+  <header class="top">
+    <button class="chip" id="btnNotes" aria-label="Libreta">
+      <svg viewBox="0 0 24 24"><path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6zM6 3v18M10 8h5M10 12h5"/></svg>
+      <span>Libreta</span>
+    </button>
+    <button class="chip wx" id="wxChip" aria-label="Clima">
+      <span id="wxIcon">·</span><span id="wxTemp">--°</span>
+    </button>
+    <button class="chip icon" id="btnSettings" aria-label="Ajustes">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </header>
+
+  <main id="stage">
+    <div id="bubble" class="bubble" role="status" aria-live="polite"></div>
+
+    <div id="petWrap">
+      <div id="pet" class="pet">
+        <div class="smoke" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <svg class="ring" viewBox="0 0 240 240" aria-hidden="true"><g id="ringSegs"></g></svg>
+        <svg class="orb" id="orb" viewBox="0 0 200 200" role="img" aria-label="Tu mascota">
+          <defs>
+            <radialGradient id="gCore" cx="42%" cy="36%" r="70%">
+              <stop offset="0" class="st-core1"/>
+              <stop offset=".55" class="st-core2"/>
+              <stop offset="1" class="st-core3"/>
+            </radialGradient>
+            <radialGradient id="gRim" cx="50%" cy="50%" r="50%">
+              <stop offset=".78" stop-opacity="0" class="st-rim"/>
+              <stop offset="1" stop-opacity=".55" class="st-rim"/>
+            </radialGradient>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3.2" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="soft"><feGaussianBlur stdDeviation="6"/></filter>
+            <clipPath id="orbClip"><circle cx="100" cy="100" r="70"/></clipPath>
+          </defs>
+
+          <g id="acc-umbrella" class="acc" transform="translate(0 -26)">
+            <path d="M40 34 Q100 -14 160 34 Q145 26 130 34 Q115 24 100 34 Q85 24 70 34 Q55 26 40 34Z" class="umb"/>
+            <path d="M100 30 V60" class="umb-stick"/>
+          </g>
+
+          <g id="body">
+            <circle cx="100" cy="100" r="70" fill="url(#gCore)"/>
+            <g clip-path="url(#orbClip)">
+              <ellipse cx="100" cy="150" rx="70" ry="30" class="mist" filter="url(#soft)"/>
+              <ellipse cx="78" cy="62" rx="26" ry="14" class="shine" filter="url(#soft)"/>
+            </g>
+            <circle cx="100" cy="100" r="70" fill="url(#gRim)"/>
+            <circle cx="100" cy="100" r="69.5" class="edge"/>
+
+            <g id="blush" class="blush">
+              <ellipse cx="66" cy="120" rx="10" ry="5"/>
+              <ellipse cx="134" cy="120" rx="10" ry="5"/>
+            </g>
+            <g id="face">
+              <g id="eyes"></g>
+              <g id="mouth"></g>
+            </g>
+
+            <g id="acc-sweat" class="acc">
+              <path class="drop d1" d="M150 70 q6 10 0 14 q-6 -4 0 -14z"/>
+              <path class="drop d2" d="M46 84 q5 8 0 11 q-5 -3 0 -11z"/>
+            </g>
+            <g id="acc-shades" class="acc">
+              <path d="M58 92 h34 q0 18 -17 18 q-17 0 -17 -18z M108 92 h34 q0 18 -17 18 q-17 0 -17 -18z" class="shades"/>
+              <path d="M92 95 h16" class="shades-bridge"/>
+            </g>
+            <g id="acc-scarf" class="acc">
+              <path d="M38 138 Q100 176 162 138 L166 150 Q100 192 34 150Z" class="scarf"/>
+              <path d="M126 158 l8 36 l14 -4 l-6 -36z" class="scarf tail"/>
+              <path d="M46 146 l4 10 M60 153 l3 10 M76 158 l2 10 M92 161 l1 10 M108 161 l-1 10 M124 158 l-2 10 M140 153 l-3 10 M154 146 l-4 10" class="scarf-stripe"/>
+            </g>
+            <g id="acc-beanie" class="acc">
+              <path d="M46 70 Q52 18 100 16 Q148 18 154 70 Q100 56 46 70Z" class="beanie"/>
+              <path d="M42 66 Q100 50 158 66 L160 80 Q100 64 40 80Z" class="beanie-band"/>
+              <circle cx="100" cy="14" r="10" class="beanie-pom"/>
+            </g>
+            <g id="acc-flower" class="acc">
+              <g transform="translate(140 42)">
+                <circle r="6" cx="0" cy="-8" class="petal"/><circle r="6" cx="8" cy="0" class="petal"/>
+                <circle r="6" cx="0" cy="8" class="petal"/><circle r="6" cx="-8" cy="0" class="petal"/>
+                <circle r="5" class="pistil"/>
+              </g>
+            </g>
+            <g id="acc-nightcap" class="acc">
+              <path d="M52 62 Q70 12 132 30 Q160 38 170 70 Q120 44 52 62Z" class="nightcap"/>
+              <circle cx="172" cy="74" r="7" class="beanie-pom"/>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <div class="floor-glow" aria-hidden="true"></div>
+    </div>
+
+    <div class="name-row">
+      <h1 id="petName">Lumi</h1>
+      <span id="moodLabel" class="mood-label">contento</span>
+    </div>
+
+    <div class="stats" id="stats">
+      <div class="stat" data-k="hunger"><span>Comida</span><b><i></i></b></div>
+      <div class="stat" data-k="energy"><span>Energía</span><b><i></i></b></div>
+      <div class="stat" data-k="fun"><span>Ánimo</span><b><i></i></b></div>
+      <div class="stat" data-k="clean"><span>Limpieza</span><b><i></i></b></div>
+    </div>
+
+    <div id="game" class="game" hidden>
+      <div class="game-hud"><span id="gScore">0</span> chispas · <span id="gTime">15</span>s</div>
+    </div>
+  </main>
+
+  <nav class="actions">
+    <button data-act="feed" aria-label="Dar comida">
+      <svg viewBox="0 0 24 24"><path d="M12 7c-2-3-7-2-7 3 0 5 4 10 7 10s7-5 7-10c0-5-5-6-7-3zM12 7c0-2 1-3 3-4"/></svg><span>Comer</span></button>
+    <button data-act="play" aria-label="Jugar">
+      <svg viewBox="0 0 24 24"><path d="M12 3l2.3 5.3L20 9l-4.3 3.8L17 18.5 12 15.6 7 18.5l1.3-5.7L4 9l5.7-.7z"/></svg><span>Jugar</span></button>
+    <button data-act="clean" aria-label="Bañar">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="14" r="5"/><circle cx="17" cy="8" r="3"/><circle cx="18" cy="17" r="2"/></svg><span>Bañar</span></button>
+    <button data-act="sleep" aria-label="Dormir">
+      <svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><span id="sleepLbl">Dormir</span></button>
+  </nav>
+
+  <form class="chatbar" id="chatForm" autocomplete="off">
+    <button type="button" class="round ghost" id="btnHistory" aria-label="Ver conversación">
+      <svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></svg>
+    </button>
+    <input id="chatInput" type="text" placeholder="Háblame…" enterkeyhint="send" maxlength="400">
+    <button type="button" class="round" id="btnMic" aria-label="Hablar por voz">
+      <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+    </button>
+    <button type="submit" class="round primary" aria-label="Enviar">
+      <svg viewBox="0 0 24 24"><path d="M4 12l16-8-6 16-2-6z"/></svg>
+    </button>
+  </form>
+
+  <div id="night" aria-hidden="true"></div>
+</div>
+
+<!-- Hojas inferiores -->
+<div class="sheet" id="sheetFood" hidden>
+  <div class="sheet-card">
+    <h2>¿Qué le das?</h2>
+    <div class="food-grid" id="foodGrid"></div>
+  </div>
+</div>
+
+<div class="sheet" id="sheetNotes" hidden>
+  <div class="sheet-card tall">
+    <h2>Libreta</h2>
+    <div class="tabs">
+      <button class="tab on" data-tab="bdays">Cumpleaños</button>
+      <button class="tab" data-tab="notes">Notas</button>
+    </div>
+    <div class="tab-body" id="tabBdays">
+      <form class="add-row" id="bdayForm">
+        <input id="bdayName" placeholder="Nombre" required maxlength="40">
+        <input id="bdayDate" type="date" required>
+        <button class="round primary" aria-label="Agregar">+</button>
+      </form>
+      <ul class="list" id="bdayList"></ul>
+    </div>
+    <div class="tab-body" id="tabNotes" hidden>
+      <form class="add-row" id="noteForm">
+        <input id="noteText" placeholder="Escribe una nota…" required maxlength="300">
+        <button class="round primary" aria-label="Agregar">+</button>
+      </form>
+      <ul class="list" id="noteList"></ul>
+    </div>
+    <p class="hint">También puedes decirle: <em>“anota que mañana pago la luz”</em> o <em>“el cumple de la Cami es el 3 de marzo”</em>.</p>
+  </div>
+</div>
+
+<div class="sheet" id="sheetHistory" hidden>
+  <div class="sheet-card tall">
+    <h2>Conversación</h2>
+    <div class="history" id="historyList"></div>
+    <button class="btn" id="btnClearHist" type="button" style="margin-top:14px">Borrar conversación</button>
+  </div>
+</div>
+
+<div class="sheet" id="sheetSettings" hidden>
+  <div class="sheet-card tall">
+    <h2>Ajustes</h2>
+
+    <section class="set">
+      <h3>Cerebro (IA propia en el celular)</h3>
+      <p class="muted" id="brainStatus">Sin descargar.</p>
+      <select id="modelSel"></select>
+      <div class="progress" id="brainProg" hidden><i></i></div>
+      <button class="btn primary" id="btnBrain">Descargar cerebro</button>
+      <p class="hint">Se descarga una sola vez (con Wi‑Fi) y después funciona sin internet, sin cuentas y sin pagar.</p>
+    </section>
+
+    <section class="set">
+      <h3>Nombres</h3>
+      <label>Tu mascota <input id="setPetName" maxlength="20"></label>
+      <label>Tú <input id="setUserName" maxlength="30"></label>
+    </section>
+
+    <section class="set">
+      <h3>Clima</h3>
+      <p class="muted" id="wxStatus">—</p>
+      <div class="add-row">
+        <input id="cityInput" placeholder="Ciudad (opcional)">
+        <button class="btn" id="btnCity" type="button">Usar</button>
+      </div>
+      <button class="btn" id="btnGeo" type="button">Usar mi ubicación</button>
+      <label>Probar look
+        <select id="simSel">
+          <option value="">Clima real</option>
+          <option value="frio">Mucho frío</option>
+          <option value="calor">Mucho calor</option>
+          <option value="lluvia">Lluvia</option>
+          <option value="nieve">Nieve</option>
+          <option value="otono">Otoño</option>
+          <option value="invierno">Invierno</option>
+          <option value="primavera">Primavera</option>
+          <option value="verano">Verano soleado</option>
+          <option value="tormenta">Tormenta</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="set">
+      <h3>Voz</h3>
+      <label class="switch"><input type="checkbox" id="setVoice"> Que me hable en voz alta</label>
+    </section>
+
+    <section class="set">
+      <button class="btn danger" id="btnReset" type="button">Empezar de cero</button>
+    </section>
+  </div>
+</div>
+
+<div class="sheet" id="sheetHello" hidden>
+  <div class="sheet-card">
+    <h2>¡Hola! Acabo de nacer ✨</h2>
+    <p class="muted">¿Cómo me llamo? ¿Y tú?</p>
+    <form id="helloForm" class="stack">
+      <input id="helloPet" placeholder="Mi nombre (ej: Lumi)" maxlength="20">
+      <input id="helloUser" placeholder="Tu nombre" maxlength="30">
+      <button class="btn primary">¡Listo!</button>
+    </form>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
