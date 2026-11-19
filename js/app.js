@@ -128,13 +128,42 @@ function sayThinking() {
   clearTimeout(bubbleT);
 }
 
+// Voces: el celular no dice cuál es femenina, así que se adivina por el nombre
+// y en Ajustes se puede elegir y probar cada una.
 let voice = null;
+const FEMALE = /(female|femenin|mujer|woman|helena|laura|sabina|elvira|dalia|paloma|catalina|elena|lucia|luc[ií]a|paulina|monica|m[oó]nica|marisol|camila|valentina|sofia|isabela|ximena|google espa[nñ]ol|-x-(eea|eec|sfb|esc)-|sm[0-9]*f)/i;
+const MALE = /(male\b|masculin|hombre|pablo|raul|ra[uú]l|jorge|alvaro|[aá]lvaro|gonzalo|tom[aá]s|diego|carlos|juan|enrique|-x-(eed|eef|esd|esf)-)/i;
+function esVoices() {
+  const vs = ('speechSynthesis' in window ? speechSynthesis.getVoices() : []) || [];
+  const es = vs.filter((v) => /^es/i.test(v.lang));
+  return es.length ? es : vs;
+}
+function guessFemale(vs) {
+  const rank = (v) => (FEMALE.test(v.name) ? 0 : MALE.test(v.name) ? 3 : 1) + (/es[-_](CL|419|US|MX)/i.test(v.lang) ? 0 : .5) + (v.localService ? 0 : .2);
+  return [...vs].sort((a, b) => rank(a) - rank(b))[0] || null;
+}
 function pickVoice() {
-  const vs = speechSynthesis?.getVoices?.() || [];
-  voice = vs.find((v) => /es[-_]CL/i.test(v.lang)) || vs.find((v) => /es[-_](US|MX|419)/i.test(v.lang)) || vs.find((v) => /^es/i.test(v.lang)) || null;
+  const vs = esVoices();
+  voice = vs.find((v) => v.name === S.settings.voiceName) || guessFemale(vs);
+  if (!$('#sheetSettings').hidden) renderVoices();
 }
 if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
-function talk(text) {
+function renderVoices() {
+  const sel = $('#voiceSel');
+  const vs = esVoices();
+  if (!vs.length) { sel.innerHTML = '<option>Este celular no tiene voces en español</option>'; sel.disabled = true; return; }
+  sel.disabled = false;
+  sel.innerHTML = vs.map((v, i) => {
+    const tag = FEMALE.test(v.name) ? ' ♀' : MALE.test(v.name) ? ' ♂' : '';
+    return `<option value="${i}">${esc(v.name)} (${v.lang})${tag}</option>`;
+  }).join('');
+  const idx = vs.indexOf(voice);
+  if (idx >= 0) sel.value = String(idx);
+  $('#voicePitch').value = S.settings.pitch ?? 1.3;
+}
+function talk(text, force = false) {
+  if (!force && !S.settings.voice) return;
+  if (!('speechSynthesis' in window)) return;
   if (!S.settings.voice || !('speechSynthesis' in window)) return;
   const clean = text.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '').trim();
   if (!clean) return;
@@ -142,7 +171,7 @@ function talk(text) {
   const u = new SpeechSynthesisUtterance(clean);
   if (voice) u.voice = voice;
   u.lang = voice?.lang || 'es-CL';
-  u.pitch = 1.45; u.rate = 1.05;
+  u.pitch = S.settings.pitch ?? 1.3; u.rate = 1.05;
   speechSynthesis.speak(u);
 }
 
@@ -509,6 +538,7 @@ $('#modelSel').innerHTML = MODELS.map((m) => `<option value="${m.id}">${m.label}
 async function renderSettings() {
   $('#setPetName').value = S.petName; $('#setUserName').value = S.userName;
   $('#setVoice').checked = !!S.settings.voice;
+  renderVoices();
   $('#modelSel').value = S.settings.model;
   $('#simSel').value = S.settings.sim || '';
   $('#wxStatus').textContent = wx ? `${wx.sim ? 'Simulación' : (place || 'Tu ubicación')}: ${Math.round(wx.temp)}°, ${W.describe(wx.code, wx.isDay).text}` : 'Sin datos de clima todavía.';
@@ -517,6 +547,15 @@ async function renderSettings() {
 $('#setPetName').onchange = (e) => { S.petName = e.target.value.trim(); save(S); render(); };
 $('#setUserName').onchange = (e) => { S.userName = e.target.value.trim(); save(S); };
 $('#setVoice').onchange = (e) => { S.settings.voice = e.target.checked; save(S); if (e.target.checked) talk('¡Hola! Ahora puedo hablar.'); };
+$('#voiceSel').onchange = (e) => {
+  const v = esVoices()[+e.target.value];
+  if (!v) return;
+  voice = v; S.settings.voiceName = v.name; save(S);
+  talk(`¡Hola! Soy ${petName()}. ¿Te gusta esta voz?`, true);
+};
+$('#voicePitch').oninput = (e) => { S.settings.pitch = +e.target.value; save(S); };
+$('#voicePitch').onchange = () => talk('Así sueno ahora.', true);
+$('#btnVoiceTest').onclick = () => talk(`¡Hola${hi()}! Soy ${petName()}, tu amiga virtual 💗`, true);
 $('#modelSel').onchange = (e) => { S.settings.model = e.target.value; save(S); renderBrain(); };
 $('#simSel').onchange = (e) => { S.settings.sim = e.target.value; save(S); refreshWeather(); };
 $('#btnGeo').onclick = async () => { S.settings.loc = null; save(S); await refreshWeather(true); renderSettings(); };

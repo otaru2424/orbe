@@ -1,5 +1,5 @@
 // Guarda la app en el celular para que abra sin internet.
-const CACHE = 'orbe-v5';
+const CACHE = 'orbe-v6';
 const SHELL = [
   './', 'index.html', 'styles.css', 'manifest.webmanifest',
   'js/app.js', 'js/pet.js', 'js/store.js', 'js/weather.js', 'js/memory.js', 'js/brain.js', 'js/llm-worker.js',
