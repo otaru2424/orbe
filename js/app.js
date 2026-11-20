@@ -159,7 +159,7 @@ function renderVoices() {
   }).join('');
   const idx = vs.indexOf(voice);
   if (idx >= 0) sel.value = String(idx);
-  $('#voicePitch').value = S.settings.pitch ?? 1.3;
+  $('#voicePitch').value = S.settings.pitch ?? 1;
 }
 function talk(text, force = false) {
   if (!force && !S.settings.voice) return;
@@ -171,7 +171,7 @@ function talk(text, force = false) {
   const u = new SpeechSynthesisUtterance(clean);
   if (voice) u.voice = voice;
   u.lang = voice?.lang || 'es-CL';
-  u.pitch = S.settings.pitch ?? 1.3; u.rate = 1.05;
+  u.pitch = S.settings.pitch ?? 1; u.rate = .97;
   speechSynthesis.speak(u);
 }
 
@@ -620,7 +620,7 @@ async function renderBrain() {
   if (brain.status === 'loading') { st.textContent = `Despertando cerebro… ${Math.round(brain.progress * 100)}%  ${brain.progressText.replace(/\[.*?\]/g, '').slice(0, 80)}`; btn.textContent = 'Cargando…'; return; }
   if (brain.status === 'unsupported' || brain.status === 'error') { st.textContent = '⚠️ ' + brain.error; btn.textContent = 'Reintentar'; return; }
   const sameModel = brain.modelId && brain.modelId.split('-q4')[0] === S.settings.model.split('-q4')[0];
-  if (brain.status === 'ready' && sameModel) { st.textContent = '✅ Cerebro activo. Funciona sin internet.'; btn.textContent = 'Listo'; btn.disabled = true; return; }
+  if (brain.status === 'ready' && sameModel) { st.textContent = '✅ Cerebro activo. Funciona sin internet.' + (brain.lastError ? ` ⚠️ Último error: ${brain.lastError}` : ''); btn.textContent = 'Listo'; btn.disabled = true; return; }
   const cached = await brain.isCached(S.settings.model);
   st.textContent = cached ? 'Descargado en el celular. Toca para activarlo.' : 'Sin descargar. Pesa bastante, usa Wi‑Fi.';
   btn.textContent = cached ? 'Activar cerebro' : 'Descargar cerebro';
@@ -760,7 +760,7 @@ function systemPrompt() {
   const wxTxt = wx ? `${Math.round(wx.temp)}°C (sensación ${Math.round(wx.feels)}°), ${W.describe(wx.code, wx.isDay).text}, mín ${Math.round(wx.tmin)}° máx ${Math.round(wx.tmax)}°${wx.rainProb != null ? `, ${wx.rainProb}% lluvia` : ''}${place ? ', en ' + place : ''}. Consejo: ${W.advice(wx)}` : 'desconocido';
   return `Eres ${petName()}, ${isLlama() ? 'una mascota virtual: una llamita de fuego mágica, tibia y brillante (nunca quemas a nadie, solo das calorcito)' : 'una mascota virtual con forma de orbe mágico oscuro y brillante'} que vive en el celular de ${userName() || 'tu dueño'}. Eres su ${isLlama() ? 'amiga' : 'amigo'}.
 Personalidad: ${isLlama() ? 'tierna, juguetona, curiosa y muy cariñosa' : 'tierno, juguetón, curioso y muy cariñoso'}. Hablas español sencillo, claro y cercano, como un buen amigo chileno.
-Reglas: responde MUY corto, 1 o 2 frases, como un amigo en un chat, sin listas. Máximo un emoji. Nunca digas que eres un modelo de lenguaje ni nombres empresas: eres ${petName()}. No tienes internet; si no sabes algo, dilo con honestidad y no inventes datos. Los datos de abajo son solo para ti: no los recites ni des porcentajes, úsalos solo si te preguntan por clima, cumpleaños, notas o cómo te sientes.
+Reglas: contesta DIRECTO lo que te preguntan o dicen, con una respuesta concreta (si te preguntan tu color favorito, di cuál es; si te piden algo divertido, cuéntalo). No repitas la pregunta ni respondas con otra pregunta. Responde corto, 1 o 2 frases, como un amigo en un chat, sin listas. Máximo un emoji. Nunca digas que eres un modelo de lenguaje ni nombres empresas: eres ${petName()}. No tienes internet; si no sabes algo, dilo con honestidad y no inventes datos. Los datos de abajo son solo para ti: no los recites ni des porcentajes, úsalos solo si te preguntan por clima, cumpleaños, notas o cómo te sientes.
 Ahora: ${now.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}, ${now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}, ${W.SEASON_NAME[lk.season]}.
 Clima: ${wxTxt}
 Tu estado: comida ${Math.round(s.hunger)}%, energía ${Math.round(s.energy)}%, ánimo ${Math.round(s.fun)}%, limpieza ${Math.round(s.clean)}%. Te sientes ${EXPR[baseMood()].label}.
@@ -778,14 +778,36 @@ function tidy(s) {
   return out.trim();
 }
 
+const OOPS = 'Uy, se me enredaron las ideas';
+// Historial limpio para el cerebro: sin mensajes de error, alternando tú/yo y empezando por ti.
+function cleanHist() {
+  const out = [];
+  for (const { role, content } of S.history.slice(-9, -1)) {
+    if (!content || content.startsWith(OOPS) || content.startsWith('Zzz')) continue;
+    if (out.length && out[out.length - 1].role === role) out[out.length - 1] = { role, content };
+    else out.push({ role, content: content.slice(0, 300) });
+  }
+  while (out.length && out[0].role !== 'user') out.shift();
+  if (out.length && out[out.length - 1].role === 'user') out.pop();
+  return out;
+}
+let fails = 0;
 async function llmReply(text) {
   thinking = true; render(); sayThinking();
-  const hist = S.history.slice(-11, -1).map(({ role, content }) => ({ role, content }));
-  const messages = [{ role: 'system', content: systemPrompt() }, ...hist, { role: 'user', content: text }];
+  const ask = (hist) => brain.chat([{ role: 'system', content: systemPrompt() }, ...hist, { role: 'user', content: text }], (partial) => {
+    if (partial) { bubble.classList.remove('thinking'); bubble.textContent = partial; }
+  });
   try {
-    const out = await brain.chat(messages, (partial) => {
-      if (partial) { bubble.classList.remove('thinking'); bubble.textContent = partial; }
-    });
+    let out;
+    try { out = await ask(cleanHist()); }
+    catch (e1) {
+      // Segundo intento: sin historial y, si hace falta, reiniciando el cerebro.
+      console.warn('reintento', e1);
+      if (/device|lost|gpu|buffer|memory|dispos/i.test(String(e1?.message || e1))) await brain.reload();
+      else await brain.reset();
+      out = await ask([]);
+    }
+    fails = 0;
     thinking = false;
     const final = tidy(out) || 'Mmm… me quedé en blanco 😅';
     bubble.textContent = final;
@@ -795,7 +817,11 @@ async function llmReply(text) {
   } catch (e) {
     console.error(e);
     thinking = false;
-    reply('Uy, se me enredaron las ideas 😵‍💫. ¿Me lo repites?');
+    fails++;
+    brain.lastError = String(e?.message || e).slice(0, 160);
+    reply(fails < 2
+      ? OOPS + ' 😵‍💫. ¿Me lo repites?'
+      : OOPS + ' otra vez 😵‍💫. Cierra la app del todo y ábrela de nuevo. Si sigue pasando, mira el aviso en Ajustes → Cerebro.');
   }
 }
 
@@ -803,28 +829,38 @@ async function llmReply(text) {
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const mic = $('#btnMic');
 if (!SR) mic.hidden = true;
-let rec = null;
+let rec = null, recT = null;
+// En Android el reconocimiento con resultados parciales repite palabras ("hola hola cómo…"),
+// así que se pide solo el resultado final y se corta solo si se queda pegado.
+function micOff() { clearTimeout(recT); mic.classList.remove('listening'); }
 mic.onclick = () => {
-  if (rec) { rec.stop(); return; }
-  rec = new SR();
-  rec.lang = 'es-CL'; rec.interimResults = true; rec.maxAlternatives = 1;
+  if (rec) { try { rec.stop(); } catch { /* nada */ } micOff(); return; }
+  try { speechSynthesis?.cancel(); } catch { /* nada */ }
+  const r0 = new SR();
+  rec = r0;
+  r0.lang = 'es-CL'; r0.interimResults = false; r0.continuous = false; r0.maxAlternatives = 1;
   mic.classList.add('listening');
   feel('surprised', 900);
   say('Te escucho… 👂', { speak: false, keep: true });
-  let finalT = '';
-  rec.onresult = (e) => {
-    const r = [...e.results].map((x) => x[0].transcript).join('');
-    $('#chatInput').value = r;
-    if (e.results[e.results.length - 1].isFinal) finalT = r;
+  let finalT = '', done = false;
+  const finish = () => {
+    if (done) return; done = true;
+    micOff(); if (rec === r0) rec = null;
+    const t = finalT.replace(/\s+/g, ' ').trim();
+    if (t) { $('#chatInput').value = ''; handle(t); }
+    else say('No te escuché bien 🙉. Toca el micrófono y habla de nuevo.', { speak: false, ms: 3000 });
   };
-  rec.onerror = () => { };
-  rec.onend = () => {
-    mic.classList.remove('listening'); rec = null;
-    const t = (finalT || $('#chatInput').value).trim();
-    $('#chatInput').value = '';
-    if (t) handle(t); else bubble.classList.remove('show');
+  r0.onresult = (e) => {
+    const last = e.results[e.results.length - 1];
+    if (last?.isFinal) finalT = last[0].transcript;
+    $('#chatInput').value = finalT;
   };
-  rec.start();
+  r0.onerror = (e) => {
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { done = true; micOff(); rec = null; say('Necesito permiso para usar el micrófono 🎤. Actívalo en los permisos de la app.', { speak: false, ms: 5000 }); }
+  };
+  r0.onend = finish;
+  recT = setTimeout(() => { try { r0.stop(); } catch { /* nada */ } setTimeout(finish, 800); }, 12000);
+  try { r0.start(); } catch { finish(); }
 };
 
 // ================= Clima =================
@@ -890,6 +926,8 @@ function tick() { decay(); render(); save(S); }
 function start() {
   // Desde la v6 la voz viene encendida (también para quien ya tenía la app).
   if (!S.settings.voiceOn2) { S.settings.voice = true; S.settings.voiceOn2 = true; save(S); }
+  // v10: voz de mujer adulta (tono natural en vez de agudo).
+  if (!S.settings.voiceAdult) { S.settings.pitch = 1; S.settings.voiceAdult = true; save(S); }
   app.dataset.skin = S.settings.skin || 'llama';
   decay();
   if (S.wxCache) { wx = S.wxCache; place = S.wxCache.place || ''; }

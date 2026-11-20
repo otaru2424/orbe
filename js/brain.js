@@ -97,6 +97,9 @@ export const brain = {
           this.progressText = r.text || '';
           this.emit();
         },
+      }, {
+        // Trozos más chicos al leer la conversación: usa menos memoria de la tarjeta gráfica del celular.
+        prefill_chunk_size: 512,
       });
       this.modelId = realId;
       this.status = 'ready';
@@ -169,6 +172,18 @@ export const brain = {
     try { for (const k of await caches.keys()) if (k.startsWith('webllm')) await caches.delete(k); } catch { /* nada */ }
     this.status = 'off'; this.progress = 0; this.error = ''; this._greeted = false;
     this.emit();
+  },
+
+  // Olvida la conversación interna del motor (por si quedó en mal estado).
+  async reset() { try { await this.engine?.resetChat(); } catch { /* nada */ } },
+
+  // Reinicia el cerebro completo (ya descargado, no vuelve a bajar nada).
+  async reload() {
+    const id = this.modelId;
+    if (!id) return;
+    this.worker?.terminate(); this.worker = null; this.engine = null;
+    this.status = 'off'; this._greeted = true;
+    await this.load(id);
   },
 
   async interrupt() { try { await this.engine?.interruptGenerate(); } catch { /* nada */ } },
