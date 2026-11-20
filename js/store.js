@@ -16,7 +16,7 @@ function fresh() {
     notes: [],
     bdays: [],
     history: [],
-    settings: { model: DEFAULT_MODEL, voice: false, loc: null, sim: '' },
+    settings: { model: DEFAULT_MODEL, voice: true, loc: null, sim: '' },
     wxCache: null,
   };
 }

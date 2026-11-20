@@ -135,6 +135,27 @@ export const brain = {
     } catch (e) { console.warn('limpieza', e); }
   },
 
+  // Borra todos los cerebros descargados de este navegador (libera espacio).
+  async removeAll() {
+    // Si se está cargando, espera a que termine para que no se vuelva a guardar.
+    while (this.status === 'loading') await new Promise((r) => setTimeout(r, 300));
+    // Cerrar el proceso de la IA directamente (más rápido y seguro que pedirle que se descargue).
+    this.worker?.terminate();
+    this.engine = null; this.worker = null; this.modelId = null;
+    try {
+      const { deleteModelAllInfoInCache } = await lib();
+      const cfg = await appCfg();
+      for (const m of MODELS) {
+        for (const id of [m.id, m.id.replace('q4f16_1', 'q4f32_1')]) {
+          try { await deleteModelAllInfoInCache(id, cfg); } catch { /* no estaba */ }
+        }
+      }
+    } catch (e) { console.warn('borrar', e); }
+    try { for (const k of await caches.keys()) if (k.startsWith('webllm')) await caches.delete(k); } catch { /* nada */ }
+    this.status = 'off'; this.progress = 0; this.error = ''; this._greeted = false;
+    this.emit();
+  },
+
   async interrupt() { try { await this.engine?.interruptGenerate(); } catch { /* nada */ } },
 };
 

@@ -165,7 +165,7 @@ function talk(text, force = false) {
   if (!force && !S.settings.voice) return;
   if (!('speechSynthesis' in window)) return;
   if (!S.settings.voice || !('speechSynthesis' in window)) return;
-  const clean = text.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '').trim();
+  const clean = text.replace(/\*[^*]+\*/g, '').replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu, '').trim();
   if (!clean) return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(clean);
@@ -296,19 +296,19 @@ function tap() {
   S.stats.love = clamp(S.stats.love + .5);
   const m = baseMood();
   const lines = TAP_LINES[m] || TAP_LINES.neutral;
-  if (Math.random() < .55) say(pick(lines), { speak: false });
+  if (Math.random() < .55) say(pick(lines));
   feel(m === 'neutral' || m === 'happy' ? pick(['happy', 'surprised', 'excited']) : m, 1300);
 }
 
 function dizzy() {
   view.anim('dizzy', 1300);
   feel('dizzy', 2600);
-  say(pick(['¡Aaay, me mareo! 😵‍💫', '¡Todo da vueltas!', 'Ya, ya, ¡paraaa! 🌀']), { speak: false });
+  say(pick(['¡Aaay, me mareo! 😵‍💫', '¡Todo da vueltas!', 'Ya, ya, ¡paraaa! 🌀']));
 }
 
 function startPet() {
   feel('love', 60000);
-  say(pick(['Mmm… qué rico 💗', '*ronronea*', '¡Más cariñitos!', 'Te quiero harto 💕']), { speak: false });
+  say(pick(['Mmm… qué rico 💗', '*ronronea*', '¡Más cariñitos!', 'Te quiero harto 💕']));
 }
 function endPet() {
   feel('happy', 1800);
@@ -321,7 +321,7 @@ function hug() {
   S.stats.love = clamp(S.stats.love + 4);
   S.stats.fun = clamp(S.stats.fun + 3);
   floatAtPet('💗', 4);
-  say(pick(['¡Abrazo! 🤗', 'Awww, yo también te quiero', '¡Apapacho!']), { speak: false });
+  say(pick(['¡Abrazo! 🤗', 'Awww, yo también te quiero', '¡Apapacho!']));
 }
 
 // Agitar el celular → se marea
@@ -575,7 +575,24 @@ $('#btnBrain').onclick = () => {
   if (brain.status === 'ready' && brain.modelId?.startsWith(S.settings.model.split('-q4')[0])) return;
   brain.load(S.settings.model);
 };
+$('#btnBrainDel').onclick = async () => {
+  if (!confirm('¿Borrar el cerebro de este dispositivo? Se libera el espacio. Si después quieres conversar de nuevo, tendrás que volver a descargarlo.')) return;
+  $('#btnBrainDel').disabled = true;
+  $('#brainStatus').textContent = 'Borrando…';
+  await brain.removeAll();
+  $('#btnBrainDel').disabled = false;
+  renderBrain();
+  say('Listo, borré mi cerebro de aquí 🧠💨. Igual me acuerdo de tus notas y cumpleaños.');
+};
+async function showStorage() {
+  try {
+    const e = await navigator.storage.estimate();
+    const gb = e.usage / 1e9;
+    $('#storageInfo').textContent = `Espacio que usa la app aquí: ${gb >= 1 ? gb.toFixed(1).replace('.', ',') + ' GB' : Math.round(e.usage / 1e6) + ' MB'}`;
+  } catch { $('#storageInfo').textContent = ''; }
+}
 async function renderBrain() {
+  showStorage();
   const st = $('#brainStatus'), btn = $('#btnBrain'), prog = $('#brainProg');
   prog.hidden = brain.status !== 'loading';
   prog.querySelector('i').style.width = Math.round(brain.progress * 100) + '%';
@@ -825,12 +842,12 @@ function idle() {
   const m = baseMood();
   const r = Math.random();
   if (r < .35) { view.look((Math.random() - .5) * 2, (Math.random() - .5) * 1.2); setTimeout(() => view.look(0, 0), 1800); return; }
-  if (m === 'cold' && r < .7) { say(pick(['¡Brrr! Hace frío, ¡abrígate! 🧣', 'Me castañetean los dientes 🥶', '¿Me prestas una frazada?']), { speak: false }); return; }
-  if (m === 'hot' && r < .7) { say(pick(['Uff… me derrito 🥵', 'Qué calor… ¡toma agüita!', '¿No hay un ventilador por ahí?']), { speak: false }); return; }
-  if (m === 'hungry' && r < .7) { say(pick(['Mi guatita hace ruido… 🍽️', '¿Comemos algo?']), { speak: false }); return; }
+  if (m === 'cold' && r < .7) { say(pick(['¡Brrr! Hace frío, ¡abrígate! 🧣', 'Me castañetean los dientes 🥶', '¿Me prestas una frazada?'])); return; }
+  if (m === 'hot' && r < .7) { say(pick(['Uff… me derrito 🥵', 'Qué calor… ¡toma agüita!', '¿No hay un ventilador por ahí?'])); return; }
+  if (m === 'hungry' && r < .7) { say(pick(['Mi guatita hace ruido… 🍽️', '¿Comemos algo?'])); return; }
   if (m === 'sleepy' && r < .7) { feel('yawn', 1500); return; }
-  if (m === 'bored' && r < .7) { say(pick(['Estoy aburrido… ¿jugamos? ✨', 'Hazme cariño 🥺']), { speak: false }); return; }
-  if (m === 'dirty' && r < .7) { say('Creo que necesito un bañito 🫧', { speak: false }); return; }
+  if (m === 'bored' && r < .7) { say(pick(['Estoy aburrido… ¿jugamos? ✨', 'Hazme cariño 🥺'])); return; }
+  if (m === 'dirty' && r < .7) { say('Creo que necesito un bañito 🫧'); return; }
   if (r < .55) view.anim('wiggle', 800);
   else if (r < .7) { feel(pick(['happy', 'excited', 'proud']), 1500); view.anim('bounce', 600); }
 }
@@ -851,6 +868,8 @@ function tick() { decay(); render(); save(S); }
 
 // ================= Inicio =================
 function start() {
+  // Desde la v6 la voz viene encendida (también para quien ya tenía la app).
+  if (!S.settings.voiceOn2) { S.settings.voice = true; S.settings.voiceOn2 = true; save(S); }
   decay();
   if (S.wxCache) { wx = S.wxCache; place = S.wxCache.place || ''; }
   render(); updateWxChip();
