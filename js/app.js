@@ -219,8 +219,26 @@ function setParticles(lk) {
     if (!f.rain && !f.snow && lk.season === 'primavera' && Math.random() < .12) spawn('p-petal', { dur: 8 + Math.random() * 4 });
     if (f.hot && Math.random() < .3) spawn('p-heat', { dur: 5 });
     if (S.sleeping && Math.random() < .12) zzz();
+    if (app.dataset.skin === 'llama' && Math.random() < (S.sleeping ? .05 : .2)) ember();
   }, 300);
 }
+
+// Chispitas que suben desde la Llamita
+const petWrap = $('#petWrap');
+function ember() {
+  if (petWrap.querySelectorAll('.p-ember').length > 14) return;
+  const el = document.createElement('i');
+  el.className = 'p-ember';
+  el.style.left = (34 + Math.random() * 32) + '%';
+  el.style.top = (18 + Math.random() * 30) + '%';
+  el.style.setProperty('--dx', ((Math.random() - .5) * 60) + 'px');
+  el.style.setProperty('--d', (1.6 + Math.random() * 1.6) + 's');
+  const s = 3 + Math.random() * 5; el.style.width = el.style.height = s + 'px';
+  petWrap.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+function applySkin() { app.dataset.skin = S.settings.skin || 'llama'; view.current = null; render(); }
+const isLlama = () => (S.settings.skin || 'llama') === 'llama';
 
 function floatAtPet(text, n = 1) {
   const c = view.center();
@@ -541,6 +559,7 @@ async function renderSettings() {
   renderVoices();
   $('#modelSel').value = S.settings.model;
   $('#simSel').value = S.settings.sim || '';
+  $('#skinSel').value = S.settings.skin || 'llama';
   $('#wxStatus').textContent = wx ? `${wx.sim ? 'Simulación' : (place || 'Tu ubicación')}: ${Math.round(wx.temp)}°, ${W.describe(wx.code, wx.isDay).text}` : 'Sin datos de clima todavía.';
   renderBrain();
 }
@@ -557,6 +576,7 @@ $('#voicePitch').oninput = (e) => { S.settings.pitch = +e.target.value; save(S);
 $('#voicePitch').onchange = () => talk('Así sueno ahora.', true);
 $('#btnVoiceTest').onclick = () => talk(`¡Hola${hi()}! Soy ${petName()}, tu amiga virtual 💗`, true);
 $('#modelSel').onchange = (e) => { S.settings.model = e.target.value; save(S); renderBrain(); };
+$('#skinSel').onchange = (e) => { S.settings.skin = e.target.value; save(S); applySkin(); feel('happy', 2000); };
 $('#simSel').onchange = (e) => { S.settings.sim = e.target.value; save(S); refreshWeather(); };
 $('#btnGeo').onclick = async () => { S.settings.loc = null; save(S); await refreshWeather(true); renderSettings(); };
 $('#btnCity').onclick = async () => {
@@ -724,7 +744,7 @@ function fallback(text) {
   if (/(te quiero|te amo|te adoro)/.test(t)) { feel('love', 2500); return '¡Yo también te quiero harto! 💗'; }
   if (/(gracias|vale|grax)/.test(t)) return pick(['¡De nada! 😊', 'Para eso estoy ✨']);
   if (/chiste/.test(t)) { feel('happy', 2000); return pick(JOKES); }
-  if (/(quien eres|que eres|como te llamas)/.test(t)) return `Soy ${petName()}, un orbe que vive en tu celular. Te cuido las notas, los cumpleaños y te digo cómo está el clima ✨`;
+  if (/(quien eres|que eres|como te llamas)/.test(t)) return `Soy ${petName()}, ${isLlama() ? 'una llamita de fuego mágica' : 'un orbe'} que vive en tu celular. Te cuido las notas, los cumpleaños y te digo cómo está el clima ✨`;
   if (/(que puedes hacer|ayuda|que sabes hacer)/.test(t)) return 'Puedo decirte el clima (“¿cómo está el clima?”), anotar cosas (“anota que…”), guardar cumpleaños (“el cumple de X es el 3 de marzo”) y recordarte quién está de cumple. ¡Y jugar!';
   if (/(chao|adios|nos vemos|bye)/.test(t)) { feel('sad', 1500); return pick(['¡Chao! Vuelve pronto 👋', 'Nos vemos… te voy a extrañar 🥺']); }
   if (brain.status === 'off' && !fallback._hinted) { fallback._hinted = true; return 'Mmm… todavía no tengo mi cerebro descargado, así que entiendo poquito 🧠💤. Ve a Ajustes ⚙️ → “Descargar cerebro” y podremos conversar de todo.'; }
@@ -738,8 +758,8 @@ function systemPrompt() {
   const notes = S.notes.slice(0, 8).map((n, i) => `${i + 1}) ${n.text}`).join('; ') || 'vacía';
   const s = S.stats;
   const wxTxt = wx ? `${Math.round(wx.temp)}°C (sensación ${Math.round(wx.feels)}°), ${W.describe(wx.code, wx.isDay).text}, mín ${Math.round(wx.tmin)}° máx ${Math.round(wx.tmax)}°${wx.rainProb != null ? `, ${wx.rainProb}% lluvia` : ''}${place ? ', en ' + place : ''}. Consejo: ${W.advice(wx)}` : 'desconocido';
-  return `Eres ${petName()}, una mascota virtual con forma de orbe mágico oscuro y brillante que vive en el celular de ${userName() || 'tu dueño'}. Eres su amigo.
-Personalidad: tierno, juguetón, curioso y muy cariñoso. Hablas español sencillo, claro y cercano, como un buen amigo chileno.
+  return `Eres ${petName()}, ${isLlama() ? 'una mascota virtual: una llamita de fuego mágica, tibia y brillante (nunca quemas a nadie, solo das calorcito)' : 'una mascota virtual con forma de orbe mágico oscuro y brillante'} que vive en el celular de ${userName() || 'tu dueño'}. Eres su ${isLlama() ? 'amiga' : 'amigo'}.
+Personalidad: ${isLlama() ? 'tierna, juguetona, curiosa y muy cariñosa' : 'tierno, juguetón, curioso y muy cariñoso'}. Hablas español sencillo, claro y cercano, como un buen amigo chileno.
 Reglas: responde MUY corto, 1 o 2 frases, como un amigo en un chat, sin listas. Máximo un emoji. Nunca digas que eres un modelo de lenguaje ni nombres empresas: eres ${petName()}. No tienes internet; si no sabes algo, dilo con honestidad y no inventes datos. Los datos de abajo son solo para ti: no los recites ni des porcentajes, úsalos solo si te preguntan por clima, cumpleaños, notas o cómo te sientes.
 Ahora: ${now.toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}, ${now.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}, ${W.SEASON_NAME[lk.season]}.
 Clima: ${wxTxt}
@@ -870,6 +890,7 @@ function tick() { decay(); render(); save(S); }
 function start() {
   // Desde la v6 la voz viene encendida (también para quien ya tenía la app).
   if (!S.settings.voiceOn2) { S.settings.voice = true; S.settings.voiceOn2 = true; save(S); }
+  app.dataset.skin = S.settings.skin || 'llama';
   decay();
   if (S.wxCache) { wx = S.wxCache; place = S.wxCache.place || ''; }
   render(); updateWxChip();

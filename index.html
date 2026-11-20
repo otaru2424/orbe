@@ -53,6 +53,15 @@
             </filter>
             <filter id="soft"><feGaussianBlur stdDeviation="6"/></filter>
             <clipPath id="orbClip"><circle cx="100" cy="100" r="70"/></clipPath>
+            <radialGradient id="gFlameOut" cx="50%" cy="72%" r="68%">
+              <stop offset="0" class="st-fo1"/>
+              <stop offset=".6" class="st-fo2"/>
+              <stop offset="1" class="st-fo3"/>
+            </radialGradient>
+            <radialGradient id="gFlameIn" cx="50%" cy="70%" r="65%">
+              <stop offset="0" class="st-fi1"/>
+              <stop offset="1" class="st-fi2"/>
+            </radialGradient>
           </defs>
 
           <g id="acc-umbrella" class="acc" transform="translate(0 -26)">
@@ -61,13 +70,27 @@
           </g>
 
           <g id="body">
-            <circle cx="100" cy="100" r="70" fill="url(#gCore)"/>
-            <g clip-path="url(#orbClip)">
-              <ellipse cx="100" cy="150" rx="70" ry="30" class="mist" filter="url(#soft)"/>
-              <ellipse cx="78" cy="62" rx="26" ry="14" class="shine" filter="url(#soft)"/>
+            <g id="skin-orbe">
+              <circle cx="100" cy="100" r="70" fill="url(#gCore)"/>
+              <g clip-path="url(#orbClip)">
+                <ellipse cx="100" cy="150" rx="70" ry="30" class="mist" filter="url(#soft)"/>
+                <ellipse cx="78" cy="62" rx="26" ry="14" class="shine" filter="url(#soft)"/>
+              </g>
+              <circle cx="100" cy="100" r="70" fill="url(#gRim)"/>
+              <circle cx="100" cy="100" r="69.5" class="edge"/>
             </g>
-            <circle cx="100" cy="100" r="70" fill="url(#gRim)"/>
-            <circle cx="100" cy="100" r="69.5" class="edge"/>
+            <g id="skin-llama">
+              <ellipse cx="100" cy="128" rx="74" ry="62" class="flame-halo" filter="url(#soft)"/>
+              <g class="flame-out">
+                <path d="M100 4 C110 30 166 60 166 114 A66 66 0 0 1 34 114 C34 82 52 68 62 46 C68 64 78 72 88 72 C82 46 90 24 100 4Z" fill="url(#gFlameOut)"/>
+                <path d="M54 66 C47 57 48 47 52 40 C56 50 61 54 66 56Z" fill="url(#gFlameOut)" class="flame-lick l1"/>
+                <path d="M147 60 C154 52 155 44 152 37 C147 46 142 50 137 52Z" fill="url(#gFlameOut)" class="flame-lick l2"/>
+              </g>
+              <g class="flame-in">
+                <path d="M100 50 C108 72 142 88 142 122 A42 42 0 0 1 58 122 C58 102 70 92 76 80 C80 92 88 96 92 96 C90 80 94 64 100 50Z" fill="url(#gFlameIn)"/>
+              </g>
+              <ellipse cx="74" cy="78" rx="10" ry="18" class="flame-shine" filter="url(#soft)"/>
+            </g>
 
             <g id="blush" class="blush">
               <ellipse cx="66" cy="120" rx="10" ry="5"/>
@@ -202,6 +225,14 @@
 <div class="sheet" id="sheetSettings" hidden>
   <div class="sheet-card tall">
     <h2>Ajustes</h2>
+
+    <section class="set">
+      <h3>Diseño</h3>
+      <select id="skinSel">
+        <option value="llama">🔥 Llamita</option>
+        <option value="orbe">🔮 Orbe</option>
+      </select>
+    </section>
 
     <section class="set">
       <h3>Cerebro (IA propia en el celular)</h3>

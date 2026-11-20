@@ -92,6 +92,43 @@ svg { stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round
 .shine { fill: #fff; opacity: .09; }
 .edge { fill: none; stroke: color-mix(in srgb, var(--c) 55%, transparent); stroke-width: 1; }
 
+/* ---------- Llamita ---------- */
+#skin-llama { display: none; }
+#app[data-skin="llama"] #skin-llama { display: inline; }
+#app[data-skin="llama"] #skin-orbe,
+#app[data-skin="llama"] .ring,
+#app[data-skin="llama"] .smoke { display: none; }
+#body { transform-origin: 100px 178px; transform: scale(var(--sz, 1)); transition: transform 1.2s cubic-bezier(.3,1.4,.5,1); }
+.st-fo1 { stop-color: color-mix(in srgb, var(--c) 55%, #fff3c4); }
+.st-fo2 { stop-color: var(--c); }
+.st-fo3 { stop-color: color-mix(in srgb, var(--c) 70%, #5a0d00); }
+.st-fi1 { stop-color: #fffbe8; }
+.st-fi2 { stop-color: color-mix(in srgb, var(--c) 35%, #ffe9a0); }
+.flame-halo { fill: color-mix(in srgb, var(--c) 45%, transparent); opacity: .45; animation: halo 2.6s ease-in-out infinite; }
+.flame-shine { fill: #fff; opacity: .22; }
+.flame-out, .flame-in { transform-origin: 100px 178px; transform-box: view-box; }
+.flame-out { animation: flick 2.4s ease-in-out infinite; filter: drop-shadow(0 0 10px color-mix(in srgb, var(--c) 70%, transparent)); }
+.flame-in { animation: flick2 1.7s ease-in-out infinite; opacity: .92; }
+.flame-lick { transform-box: fill-box; transform-origin: 50% 100%; animation: lick 1.3s ease-in-out infinite; }
+.flame-lick.l2 { animation-delay: -.6s; animation-duration: 1.6s; }
+#app[data-skin="llama"] .eye, #app[data-skin="llama"] .eye-line { fill: #2a0f05; }
+#app[data-skin="llama"] .eye-line { stroke: #2a0f05; fill: none; }
+#app[data-skin="llama"] .eye-core { fill: #fff; opacity: .95; }
+#app[data-skin="llama"] .mouth { stroke: #3a1606; }
+#app[data-skin="llama"] .mouth-fill { fill: #5a1f08; stroke: #3a1606; }
+#app[data-skin="llama"] #eyes, #app[data-skin="llama"] #mouth { filter: none; }
+#app[data-skin="llama"] .blush { fill: #ff4f6e; }
+#app[data-skin="llama"] .pet.sleeping .flame-out { animation-duration: 4s; }
+#app[data-skin="llama"] .pet.shiver .flame-out { animation: flick .5s ease-in-out infinite; }
+.p-ember { position: absolute; width: 6px; height: 6px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, #fff6c8, var(--c) 60%, transparent 70%);
+  animation: ember var(--d, 2.4s) ease-out forwards; z-index: 2; }
+@keyframes flick { 0%,100% { transform: scale(1,1) skewX(0); } 25% { transform: scale(.97,1.04) skewX(1.5deg); } 50% { transform: scale(1.02,.97) skewX(-1deg); } 75% { transform: scale(.98,1.03) skewX(-2deg); } }
+@keyframes flick2 { 0%,100% { transform: scale(1,1); } 40% { transform: scale(.95,1.06) skewX(-2deg); } 70% { transform: scale(1.03,.96) skewX(2deg); } }
+@keyframes lick { 0%,100% { transform: scaleY(1) rotate(0); opacity: .95; } 50% { transform: scaleY(1.25) rotate(-6deg); opacity: .7; } }
+@keyframes halo { 0%,100% { opacity: .38; transform: scale(1); } 50% { opacity: .55; transform: scale(1.04); } }
+@keyframes ember { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--dx, 0px), -120px) scale(.2); opacity: 0; } }
+
 #eyes, #mouth { transition: transform .25s ease; filter: drop-shadow(0 0 3px var(--c)) drop-shadow(0 0 8px color-mix(in srgb, var(--c) 60%, transparent)); }
 .eye { fill: var(--c); }
 .eye-core { fill: #fff; opacity: .85; }

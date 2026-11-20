@@ -62,6 +62,20 @@ export const EXPR = {
   proud:     { eyes: 'happy',  mouth: 'cat',    color: '#ffd56b', label: 'orgulloso', blush: true },
 };
 
+// Llamita: colores de fuego, tamaño según ánimo y etiquetas en femenino
+export const LLAMA = {
+  neutral:   ['#ff8a3d', 1],    happy:    ['#ffb02e', 1.08], love:     ['#ff5fa2', 1.07],
+  excited:   ['#ffd23f', 1.1],  sleepy:   ['#b39cff', .94],  sleeping: ['#8f80f0', .9],
+  sad:       ['#5aa9ff', .86],  hungry:   ['#ff9e5e', .96],  bored:    ['#c2a48c', .95],
+  dirty:     ['#b5a95a', .97],  cold:     ['#7fd0ff', .84],  hot:      ['#ff3d2e', 1.06],
+  dizzy:     ['#c58cff', 1],    surprised:['#ffe58a', 1.05], eating:   ['#ffc46b', 1.03],
+  grumpy:    ['#ff4a3a', 1.02], scared:   ['#b0b8ff', .86],  thinking: ['#ffcf6f', 1],
+  yawn:      ['#b6a3ff', .95],  proud:    ['#ffd56b', 1.1],
+};
+const FEM = { tranquilo: 'tranquila', enamorado: 'enamorada', emocionado: 'emocionada', aburrido: 'aburrida',
+  cochinito: 'cochinita', acalorado: 'acalorada', mareado: 'mareada', sorprendido: 'sorprendida',
+  'gruñón': 'gruñona', asustado: 'asustada', orgulloso: 'orgullosa' };
+
 export class PetView {
   constructor(root) {
     this.root = root; // #app
@@ -99,11 +113,14 @@ export class PetView {
       this.mouth.innerHTML = MOUTHS[e.mouth];
       this.current = name;
     }
-    this.root.style.setProperty('--c', e.color);
+    const llama = this.root.dataset.skin === 'llama';
+    const fl = LLAMA[name] || LLAMA.neutral;
+    this.root.style.setProperty('--c', llama ? fl[0] : e.color);
+    this.root.style.setProperty('--sz', llama ? fl[1] : 1);
     this.pet.classList.toggle('blushing', !!e.blush);
     this.pet.classList.toggle('shiver', e.body === 'shiver');
     this.pet.classList.toggle('hot', e.body === 'hot');
-    this.moodLabel.textContent = e.label;
+    this.moodLabel.textContent = llama ? (FEM[e.label] || e.label) : e.label;
   }
 
   acc(id, on) { this.root.querySelector('#acc-' + id)?.classList.toggle('on', !!on); }
