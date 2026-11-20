@@ -34,12 +34,18 @@ export const brain = {
   emit() { this.listeners.forEach((f) => f(this)); },
 
   async supported() {
-    if (!('gpu' in navigator)) return { ok: false, f16: false };
+    if (this._sup) return this._sup;
+    if (!('gpu' in navigator)) return { ok: false, f16: false, why: 'nogpu' };
     try {
-      const a = await navigator.gpu.requestAdapter();
-      if (!a) return { ok: false, f16: false };
-      return { ok: true, f16: a.features.has('shader-f16') };
-    } catch { return { ok: false, f16: false }; }
+      // Algunos celulares tardan o se quedan pegados aquí: máximo 10 segundos.
+      const a = await Promise.race([
+        navigator.gpu.requestAdapter({ powerPreference: 'high-performance' }),
+        new Promise((r) => setTimeout(() => r('timeout'), 10000)),
+      ]);
+      if (a === 'timeout') return { ok: false, f16: false, why: 'timeout' };
+      if (!a) return { ok: false, f16: false, why: 'noadapter' };
+      return (this._sup = { ok: true, f16: a.features.has('shader-f16') });
+    } catch (e) { return { ok: false, f16: false, why: String(e?.message || e) }; }
   },
 
   async resolveId(id) {
@@ -59,14 +65,23 @@ export const brain = {
 
   async load(id) {
     if (this.status === 'loading') return;
-    const realId = await this.resolveId(id);
-    if (!realId) {
+    this.status = 'loading'; this.progress = 0; this.progressText = 'Revisando tu celular…'; this.error = '';
+    this.emit();
+    const s = await this.supported();
+    if (!s.ok) {
       this.status = 'unsupported';
-      this.error = 'Este navegador no tiene WebGPU. Usa Chrome actualizado en tu celular.';
+      this.error = s.why === 'nogpu'
+        ? 'Este navegador no tiene WebGPU. Actualiza Google Chrome en tu celular (Play Store) y vuelve a intentar.'
+        : s.why === 'timeout'
+          ? 'La tarjeta gráfica del celular no respondió. Cierra la app del todo, ábrela de nuevo y reintenta.'
+          : s.why === 'noadapter'
+            ? 'Chrome no me dio acceso a la tarjeta gráfica. Actualiza Chrome y reinicia el celular.'
+            : 'Error al revisar el celular: ' + s.why;
       this.emit();
       return;
     }
-    this.status = 'loading'; this.progress = 0; this.progressText = 'Preparando…'; this.error = '';
+    const realId = s.f16 ? id : id.replace('q4f16_1', 'q4f32_1');
+    this.progressText = 'Conectando para descargar…';
     this.emit();
     let worker = null;
     try {
